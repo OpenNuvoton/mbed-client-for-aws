@@ -35,11 +35,10 @@
 #include "core_pkcs11.h"
 #include "iot_crypto.h"
 #include "core_pkcs11_config.h"
-//#include "aws_ota_codesigner_certificate.h"
 #include "NuMicro.h"
 #include "SPIFBlockDevice.h" 
 #include "ota_pal_mbed.h"
-
+#include "aws_credentials.h"
 
 #if defined(TARGET_NUMAKER_PFM_M487) || defined(TARGET_NUMAKER_IOT_M487)
 /* We needn't write-protect and hold functions. Configure /WP and /HOLD pins to high. */
@@ -806,8 +805,6 @@ lexit:
 /* Read the specified signer certificate from the FMC into a local buffer. The allocated
  * memory becomes the property of the caller who is responsible for freeing it.
  */
-#include "aws_credentials.h"
-//extern const char codeVerKey[];  // define in aws_credentials.h; like as AFR signingcredentialSIGNING_CERTIFICATE_PEM
 static uint8_t * prvPAL_ReadAndAssumeCertificate( const uint8_t * const pucCertName,
                                                   uint32_t * const ulSignerCertSize )
 {
@@ -829,9 +826,10 @@ static uint8_t * prvPAL_ReadAndAssumeCertificate( const uint8_t * const pucCertN
                     ( const char * ) pucCertName );
 
         /* Allocate memory for the signer certificate plus a terminating zero so we can copy it and return to the caller. */
-        ulCertSize = strlen(aws::credentials::codeVerKey); //sizeof( codeVerKey );
+        // define sign-crt in aws_credentials.h; like as AFR signingcredentialSIGNING_CERTIFICATE_PEM
+        ulCertSize = strlen(aws_codeVerCrt); //sizeof( aws_codeVerCrt );
         pucSignerCert = ( uint8_t * )malloc( ulCertSize + 1 );                       /*lint !e9029 !e9079 !e838 malloc proto requires void*. */
-        pucCertData = ( uint8_t * ) (aws::credentials::codeVerKey); /*lint !e9005 we don't modify the cert but it could be set by PKCS11 so it's not const. */
+        pucCertData = ( uint8_t * ) aws_codeVerCrt; /*lint !e9005 we don't modify the cert but it could be set by PKCS11 so it's not const. */
 
         if( pucSignerCert != NULL )
         {
