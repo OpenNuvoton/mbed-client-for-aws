@@ -1,5 +1,8 @@
 {
     "name": "aws-client",
+    "macros": [
+        "MBEDTLS_SHA1_C"
+    ],
     "config": {
         "log-retarget": {
             "help": "Retarget log output. On enabled, implement aws_iot_log_printf with the same signature as printf",
