@@ -80,6 +80,7 @@ const char OTA_JsonFileSignatureKey[ OTA_FILE_SIG_KEY_STR_MAX_LENGTH ] = "sig-sh
 /* To init() & deinit() spif once by class Install_spif */
 int spifInitFlag;
 class Install_spif { 
+public:
     Install_spif() { 
         spifInitFlag = spif.init();
     }
@@ -88,7 +89,7 @@ class Install_spif {
     }
 };
  /* init Install_spif instance  */
- Install_spif obj();
+ Install_spif obj;
 
 /*
  * Image Header.
@@ -822,7 +823,7 @@ static uint8_t * prvPAL_ReadAndAssumeCertificate( const uint8_t * const pucCertN
     }
     else
     {
-        OTA_LOG( "[%s] No such certificate file: %s. Using aws_ota_codesigner_certificate.h.\r\n", __FUNCTION__,
+        OTA_LOG( "[%s] No such certificate file: %s. Using default codesigner_certificate in aws_credentials.h\r\n", __FUNCTION__,
                     ( const char * ) pucCertName );
 
         /* Allocate memory for the signer certificate plus a terminating zero so we can copy it and return to the caller. */
