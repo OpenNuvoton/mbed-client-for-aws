@@ -771,7 +771,7 @@ static bool prvGetCertificate( const char * pcLabelName,
         goto lexit;
     }
   
-    pucCert = (uint8_t *)malloc(info.size);
+    pucCert = (uint8_t *)malloc(info.size+1);
     if( pucCert == NULL ) {
         LogError( ("memory allocate: %d failed", info.size) );
         goto lexit;
@@ -787,9 +787,9 @@ static bool prvGetCertificate( const char * pcLabelName,
         LogError( ("%s: Expected %d Got %d", kv_label_name, info.size, actual_size) );
         goto lexit;
     }
-    
+    pucCert[actual_size] = 0U;
     *ppucData = pucCert;
-    *pulDataSize = actual_size;
+    *pulDataSize = actual_size + 1U;
     return true;
     
 lexit:
