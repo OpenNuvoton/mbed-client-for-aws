@@ -706,6 +706,7 @@ static OtaErr_t setImageStateWithReason( OtaImageState_t stateToSet,
         {   /* Now that we've accepted the firmware update, we can complete the job. */
             /* Stop the SelfTest timer. */
             ( void ) otaAgent.pOtaInterface->os.timer.stop( OtaSelfTestTimer);
+            otaAgent.fileContext.isInSelfTest = false;
         }
         err = updateJobStatusFromImageState( state, ( int32_t ) reason );
     }
@@ -1644,7 +1645,7 @@ static DocParseErr_t extractParameter( JsonDocParam_t docParam,
     }
     else if( ModelParamTypeIdent == docParam.modelParamType )
     {
-        LogDebug( ( "Identified parameter: [ %s ]",
+        LogInfo( ( "Identified parameter: [ %s ]",
                     docParam.pSrcKey ) );
 
         *( bool * ) pParamAdd = true;
