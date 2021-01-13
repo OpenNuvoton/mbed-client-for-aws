@@ -42,8 +42,10 @@
 
 #if defined(TARGET_NUMAKER_PFM_M487) || defined(TARGET_NUMAKER_IOT_M487)
 /* We needn't write-protect and hold functions. Configure /WP and /HOLD pins to high. */
+#if !defined(MBED_SPI_NOT_CTL_WP_M487) // Pull high WP/HD only for M487 DEV on-board SPI flash.
 DigitalOut onboard_spi_wp(PC_5, 1);
 DigitalOut onboard_spi_hold(PC_4, 1);
+#endif
 #endif
 
 SPIFBlockDevice spif(MBED_CONF_SPIF_DRIVER_SPI_MOSI,
@@ -89,7 +91,55 @@ public:
     }
 };
  /* init Install_spif instance  */
- Install_spif obj;
+ Install_spif spiObj;
+
+ /* To set NuMaker IAP mode */
+class Set_IAP_mode {
+public:
+    Set_IAP_mode() {
+        SYS_UnlockReg();
+        FMC_Open();
+        // Boot From LD-ROM
+        /*
+            CONFIG0[7:6]
+            00 = Boot from LDROM with IAP mode.
+            01 = Boot from LDROM without IAP mode.
+            10 = Boot from APROM with IAP mode.
+            11 = Boot from APROM without IAP mode.
+        */
+        uint32_t  au32Config[2];
+#if 0   // For debug by LED
+        static DigitalOut gLed(LED_GREEN);
+        static DigitalOut rLed(LED_RED);
+        int i;
+        for( i=0; i < 5; i++) {
+            ThisThread::sleep_for(500);
+            gLed = !gLed;
+        }
+        SYS_UnlockReg(); // ThisThread::sleep_for can cause SYS_UnlockReg() to timeout, fix it by adding SYS_UnlockReg() again
+#endif
+        FMC_ReadConfig(au32Config, 2);
+        if( (au32Config[0] & 0x40) )        /* Check if it's boot from APROM/LDROM with IAP. */
+        {
+            FMC_ENABLE_CFG_UPDATE();       /* Enable User Configuration update. */
+            au32Config[0] &= ~0x40;        /* Select IAP boot mode. */
+            FMC_WriteConfig(au32Config, 2);/* Update User Configuration CONFIG0 and CONFIG1. */
+#if 0   // For debug by LED
+            for( i=0; i < 5; i++) {
+                ThisThread::sleep_for(500);
+                rLed = !rLed;
+            }
+#endif
+            SYS_ResetChip();    /* Perform chip reset to make new User Config take effect. */
+        }
+        FMC_Close();                       /* Disable FMC ISP function */
+        /* Lock protected registers */
+        SYS_LockReg();
+    }
+    ~Set_IAP_mode() {}
+ };
+  /* init iap instance  */
+ Set_IAP_mode iapObj;
 
 /*
  * Image Header.
