@@ -40,13 +40,12 @@
 #include "ota_pal_mbed.h"
 #include "aws_credentials.h"
 
-#if defined(TARGET_NUMAKER_PFM_M487) || defined(TARGET_NUMAKER_IOT_M487)
+/* Move SPI flash WP pin control to application main.cpp */
+//#if defined(TARGET_NUMAKER_PFM_M487) || defined(TARGET_NUMAKER_IOT_M487)
 /* We needn't write-protect and hold functions. Configure /WP and /HOLD pins to high. */
-#if !defined(MBED_SPI_NOT_CTL_WP_M487) // Pull high WP/HD only for M487 DEV on-board SPI flash.
-DigitalOut onboard_spi_wp(PC_5, 1);
-DigitalOut onboard_spi_hold(PC_4, 1);
-#endif
-#endif
+//DigitalOut onboard_spi_wp(PC_5, 1);
+//DigitalOut onboard_spi_hold(PC_4, 1);
+//#endif
 
 SPIFBlockDevice spif(MBED_CONF_SPIF_DRIVER_SPI_MOSI,
                         MBED_CONF_SPIF_DRIVER_SPI_MISO,
