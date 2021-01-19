@@ -268,8 +268,11 @@ lexit:
     
 }
 
-
+#ifdef SPI_FLASH_BUFFER_SIZE
+#define BUFFER_SIZE                 SPI_FLASH_BUFFER_SIZE
+#else
 #define BUFFER_SIZE                 512//2048 /* SPI block size */
+#endif
 
 #ifdef __ICCARM__
 #pragma data_alignment=4
@@ -338,6 +341,82 @@ static bool prvSPI_FLASH_EraseBank()
         }
     }
     
+lexit:
+  return result;
+}
+
+
+#define ROUND_SIZE(a, b)            (((a + b - 1) / b) * b)
+/* To use 2nd SPI bank to backup current active image */
+static bool prvSPI_FLASH_BackupBank(uint32_t dstAddress, uint32_t srcAddress, uint32_t srcSize)
+{
+  int spiBlockSzie =  spif.get_erase_size();
+  uint32_t  startAddress = dstAddress + spiBlockSzie;
+  uint32_t  bankSize = ROUND_SIZE(srcSize, spiBlockSzie);
+  bool      result = false;
+  int       ret;
+
+  // ToDo by Mbed API
+  BootImageDescriptor_t xDescImage;
+  memcpy(xDescImage.xImgHeader.cImgSignature, AWS_BOOT_IMAGE_SIGNATURE, AWS_BOOT_IMAGE_SIGNATURE_SIZE);
+  xDescImage.xImgHeader.ucImgFlags = AWS_BOOT_FLAG_IMG_VALID;
+  xDescImage.pvStartAddr = 0x00;
+  xDescImage.pvEndAddr = xDescImage.pvStartAddr + (srcSize - 1);
+  xDescImage.pvExecAddr = 0x00;
+  xDescImage.ulReserved = startAddress; /* Backup image's SPI Flash start address */
+
+    /*
+     *  Erase flash page
+     */
+    if( (startAddress + bankSize) > (spif.size()) )
+    {
+        OTA_LOG("[%s] FAILED!\n", __FUNCTION__);
+        OTA_LOG("[%s] Exceed reserved Flash Bank boundary 0x%x > 0x%x \n", __FUNCTION__, (startAddress + bankSize), (spif.size()));
+        goto lexit;
+    }
+    OTA_LOG("[%s] Erase SPI flash bank 0x%x ~ 0x%x ...", __FUNCTION__, dstAddress, (startAddress + bankSize));
+    if( spif.erase(dstAddress, bankSize + spiBlockSzie) == SPIF_BD_ERROR_OK )
+    {
+        result = true;
+        OTA_LOG("[%s] done.\n", __FUNCTION__);
+    } else {
+       result = false;
+       OTA_LOG("[%s] fail.\n", __FUNCTION__);
+       goto lexit;
+    }
+    /*
+     *  Copy src image to SPI flash
+     */
+    OTA_LOG("[%s] Backup src image to SPI flash backup-bank 0x%x from 0x%x...", __FUNCTION__, startAddress, srcAddress);
+    ret = spif.program((const void*)srcAddress, startAddress, srcSize);
+    if( ret != SPIF_BD_ERROR_OK )
+    {
+        OTA_LOG( "[%s] ERROR - SPI Flash write image failed\r\n", __FUNCTION__ );
+        result = false;
+        goto lexit;
+    }
+    /* Write Image Meta data in 1st block of backup bank */
+    ret = spif.program((const void*)&xDescImage, dstAddress, sizeof(BootImageDescriptor_t));
+    if( ret != SPIF_BD_ERROR_OK )
+    {
+        OTA_LOG( "[%s] ERROR - SPI Flash write Image header failed\r\n", __FUNCTION__ );
+        result = false;
+        goto lexit;
+    }
+
+    /* Mark FMC image-header ulReserved field as SPI address of backup image */
+    const BootImageDescriptor_t * pxAppImgDesc;
+    BootImageDescriptor_t xDescCopy;
+    pxAppImgDesc = ( BootImageDescriptor_t * ) NVT_BOOT_IMG_HEAD_BASE;
+    xDescCopy = *pxAppImgDesc;                    /* Copy image descriptor from flash into RAM structure. */
+    xDescCopy.ulReserved = dstAddress; /* Backup bank's SPI Flash start address */
+    if( prvFLASH_update(NVT_BOOT_IMG_HEAD_BASE, (uint8_t *)&xDescCopy,
+                        sizeof( BootImageDescriptor_t) ) == true )
+    {
+        OTA_LOG( "[%s] Mark backup image address.\r\n", __FUNCTION__ );
+        result = true;
+    }
+
 lexit:
   return result;
 }
@@ -418,6 +497,7 @@ OtaPalStatus_t otaPal_CreateFileForRx( OtaFileContext_t * const C )
             xDescCopy.pvStartAddr = 0x00;
             xDescCopy.pvEndAddr = xDescCopy.pvStartAddr + C->fileSize -1;
             xDescCopy.pvExecAddr = 0x00;
+            xDescCopy.ulReserved = 0x00;
 
             if( false == prvFLASH_update(NVT_BOOT_IMG_HEAD_BASE, (uint8_t *)&xDescCopy, 
                                             sizeof( BootImageDescriptor_t) ) )
@@ -571,7 +651,7 @@ OtaPalStatus_t otaPal_CloseFile( OtaFileContext_t * const C )
         OTA_LOG( "[%s] ERROR - Invalid context.\r\n", __FUNCTION__ );
         mainErr = OtaPalFileClose;
     }
-    
+
     prvContextClose( C );
     return OTA_PAL_COMBINE_ERR( mainErr, subErr );
 }
@@ -949,6 +1029,19 @@ OtaPalStatus_t otaPal_ActivateNewImage( OtaFileContext_t * const C )
 {
 
     OTA_LOG( "[%s] Activating the new MCU image.\r\n", __FUNCTION__ );
+
+    /* Backup current active image to SPI flash in the 2nd bank at (OTA_SPI_BANK_START + OTA_SPI_BANK_SIZE) */
+    /* Also mark FMC's image header reserved field as backup src-image SPI address  */
+#ifndef NVT_OTA_WITHOUT_BACKUP_BANK
+    prvSPI_FLASH_BackupBank((OTA_SPI_BANK_START + OTA_SPI_BANK_SIZE), APPLICATION_ADDR, APPLICATION_SIZE);
+#if 1 // Monitor header of Bank1 & Bank2
+    char buffer[64];
+    spif.read(buffer, 0x00, sizeof(buffer));
+    OTA_LOG("### Bank-1: 0x%x,%x, %x, %x\n", (uint32_t *)&buffer[0], (uint32_t *)&buffer[4],(uint32_t *)&buffer[8], (uint32_t *)&buffer[12]);
+    spif.read(buffer, 0x80000, sizeof(buffer));
+    OTA_LOG("### Bank-2: %s\n", buffer);
+#endif
+#endif
     return otaPal_ResetDevice(C);
 }
 
