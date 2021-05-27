@@ -3,76 +3,70 @@
 
 add_library(mbed-client-for-aws INTERFACE)
 
+
 target_include_directories(mbed-client-for-aws
     INTERFACE
         .
-        mbed/include
+        backoffAlgorithm/source/include
+        CMock/src
+        COMPONENT_AWSIOT_DEVICEDEFENDER/device-defender-for-aws-iot-embedded-sdk/source/include
+        COMPONENT_AWSIOT_DEVICESHADOW/device-shadow-for-aws-iot-embedded-sdk/source/include
+        COMPONENT_AWSIOT_HTTP/coreHTTP/source/include
+        COMPONENT_AWSIOT_HTTP/coreHTTP/source/interface
+        COMPONENT_AWSIOT_JOBS/jobs-for-aws-iot-embedded-sdk/source/include
+        COMPONENT_AWSIOT_JSON/coreJSON/source/include
+        COMPONENT_AWSIOT_MQTT/coreMQTT/source/include
+        COMPONENT_AWSIOT_MQTT/coreMQTT/source/interface
+        COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/include
+        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/include
+        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/dependency/3rdparty/mbedtls_utils
+        COMPONENT_AWSIOT_PKCS11/pkcs11   
+        mbed/COMPONENT_AWSIOT_MQTT
+        mbed/COMPONENT_AWSIOT_OTA
+        mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_NVTBL
+        mbed/COMPONENT_AWSIOT_OTA/crypto
+        mbed/COMPONENT_AWSIOT_OTA/os
+        mbed/COMPONENT_AWSIOT_PKCS11
+        mbed/COMPONENT_AWSIOT_PKCS11/mbedtls
+        mbed/transport/include 
         tinycbor/src
-        aws-iot-device-sdk-embedded-c/ports/common/include/atomic
-        aws-iot-device-sdk-embedded-c/ports/common/include
-        aws-iot-device-sdk-embedded-c/libraries/aws/common/include
-        aws-iot-device-sdk-embedded-c/libraries/aws/jobs/include/types
-        aws-iot-device-sdk-embedded-c/libraries/aws/jobs/include
-        aws-iot-device-sdk-embedded-c/libraries/aws/jobs/src/private
-        aws-iot-device-sdk-embedded-c/libraries/aws/shadow/include/types
-        aws-iot-device-sdk-embedded-c/libraries/aws/shadow/include
-        aws-iot-device-sdk-embedded-c/libraries/aws/shadow/src/private
-        aws-iot-device-sdk-embedded-c/libraries
-        aws-iot-device-sdk-embedded-c/libraries/platform
-        aws-iot-device-sdk-embedded-c/libraries/standard/common/include
-        aws-iot-device-sdk-embedded-c/libraries/standard/common/include/types
-        aws-iot-device-sdk-embedded-c/libraries/standard/common/src/private
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/include
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/include/types
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/private
-        aws-iot-device-sdk-embedded-c/libraries/standard/serializer/include
+        logging
+        aws-iot-device-sdk-embedded-C/platform/include
 )
 
 target_sources(mbed-client-for-aws
     INTERFACE
-        mbed/src/iot_thread.cpp
-        mbed/src/iot_semaphore.cpp
-        mbed/src/iot_network.cpp
-        mbed/src/iot_mutex.cpp
-        mbed/src/iot_clock.cpp
+        COMPONENT_AWSIOT_JOBS/jobs-for-aws-iot-embedded-sdk/source/jobs.c
+        COMPONENT_AWSIOT_JSON/coreJSON/source/core_json.c
+        COMPONENT_AWSIOT_MQTT/coreMQTT/source/core_mqtt.c
+        COMPONENT_AWSIOT_MQTT/coreMQTT/source/core_mqtt_serializer.c
+        COMPONENT_AWSIOT_MQTT/coreMQTT/source/core_mqtt_state.c
+        COMPONENT_AWSIOT_OTA/ota.c
+        COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/ota_base64.c
+        COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/ota_cbor.c
+        COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/ota_http.c
+        COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/ota_interface.c
+        COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/ota_mqtt.c
+        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/core_pkcs11.c
+        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/core_pki_utils.c
+        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/dependency/3rdparty/mbedtls_utils/mbedtls_error.c
+        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/dependency/3rdparty/mbedtls_utils/mbedtls_utils.c
+        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/portable/mbedtls/core_pkcs11_mbedtls.c
+        backoffAlgorithm/source/backoff_algorithm.c
+        mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_NVTBL/ota_pal_mbed.cpp
+        mbed/COMPONENT_AWSIOT_OTA/crypto/iot_crypto.cpp
+        mbed/COMPONENT_AWSIOT_OTA/os/ota_os_mbed.cpp
+        mbed/COMPONENT_AWSIOT_PKCS11/COMPONENT_AWSIOT_PKCS11_KVSTORE/core_pkcs11_pal.cpp
+        mbed/COMPONENT_AWSIOT_PKCS11/mbedtls/threading_alt.cpp
+        mbed/clock/src/clock_mbed.cpp
+        mbed/transport/src/transport_mbed_tcp.cpp
+        mbed/transport/src/transport_mbed_tls.cpp
         tinycbor/src/cborencoder.c
-        tinycbor/src/cborvalidation.c
-        tinycbor/src/cborpretty.c
-        tinycbor/src/cborparser_dup_string.c
-        tinycbor/src/cborparser.c
-        tinycbor/src/cborerrorstrings.c
         tinycbor/src/cborencoder_close_container_checked.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/common/src/aws_iot_validate.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/common/src/aws_iot_subscription.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/common/src/aws_iot_parser.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/common/src/aws_iot_operation.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/common/src/aws_iot_doc_parser.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/jobs/src/aws_iot_jobs_api.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/jobs/src/aws_iot_jobs_subscription.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/jobs/src/aws_iot_jobs_static_memory.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/jobs/src/aws_iot_jobs_serialize.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/jobs/src/aws_iot_jobs_operation.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/shadow/src/aws_iot_shadow_subscription.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/shadow/src/aws_iot_shadow_static_memory.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/shadow/src/aws_iot_shadow_parser.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/shadow/src/aws_iot_shadow_operation.c
-        aws-iot-device-sdk-embedded-c/libraries/aws/shadow/src/aws_iot_shadow_api.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/common/src/iot_init.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/common/src/iot_taskpool_static_memory.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/common/src/iot_taskpool.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/common/src/iot_static_memory_common.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/common/src/iot_logging.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_serialize.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_operation.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_network.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_lightweight_api.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_helper.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_api.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_validate.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_subscription.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/mqtt/src/iot_mqtt_static_memory.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/serializer/src/cbor/iot_serializer_tinycbor_decoder.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/serializer/src/cbor/iot_serializer_tinycbor_encoder.c
-        aws-iot-device-sdk-embedded-c/libraries/standard/serializer/src/iot_serializer_static_memory.c
+        tinycbor/src/cborerrorstrings.c
+        tinycbor/src/cborparser.c
+        tinycbor/src/cborparser_dup_string.c
+        tinycbor/src/cborpretty.c
+        tinycbor/src/cborvalidation.c
 )
 
